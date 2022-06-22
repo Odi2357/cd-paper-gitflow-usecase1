@@ -1,0 +1,83 @@
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        type: choice
+        description: Choose version bump
+        options:
+        - major
+        - minor
+
+jobs:
+  build-test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.PAT }}
+        ref: development
+    - name: Build & Test
+      uses: actions/setup-node@v3
+      with:
+        node-version: 16.x
+        cache: 'npm'
+    - name: Clean install of dependencies
+      run: npm ci
+    - name: Build application
+      run: npm run build --if-present
+    - name: Run test
+      run: npm run test:prod
+
+  update-version:
+    needs: build-test
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.PAT }}
+        ref: development
+    - name: Build & Test
+      uses: actions/setup-node@v3
+      with:
+        node-version: 16.x
+        cache: 'npm'
+    - name: Update major version
+      if: github.event.version == 'major'
+      run: |
+          git config user.name "GitHub Actions"
+          git config user.email "<>"
+          npm version premajor --preid="rc" -m "Upgrade to %s [no ci]"
+          echo "APP_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+          git push origin development:release/${{ env.APP_VERSION }} --follow-tags
+    - name: Update minor version
+      if: github.event.version == 'minor'
+      run: |
+          git config user.name "GitHub Actions"
+          git config user.email "<>"
+          npm version preminor --preid="rc" -m "Upgrade to %s [no ci]"
+          echo "APP_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+          git push origin development:release/${{ env.APP_VERSION }} --follow-tags
+
+  create-release:
+    needs: update-version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ env.APP_VERSION }}
+          release_name: Release ${{ env.APP_VERSION }}
+          body: |
+            Release ${{ env.APP_VERSION }}
+          draft: false
+          prerelease: true
+      - name: Deploy to DEV
+        run: echo "Successfully deployed to DEV-Environment."

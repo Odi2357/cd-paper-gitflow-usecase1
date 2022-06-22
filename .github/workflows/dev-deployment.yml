@@ -1,52 +1,46 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
-
-name: Node.js CI
-
 on:
-  pull_request:
+  push:
     branches: [ "development" ]
 
 jobs:
-  build:
+  build-deploy:
 
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [16.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-
     steps:
     - uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
     - name: Build & Test
       uses: actions/setup-node@v3
       with:
-        node-version: ${{ matrix.node-version }}
+        node-version: 16.x
         cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
-    
-  deploy:
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [16.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-
-    steps:
-    - uses: actions/checkout@v3
-    - name: Create new version
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm version prerelease -m "Upgrade to %s"
-    - run: | 
-        echo "APP_VERSION=$(npm pkg get version)" >> $GITHUB_ENV
+    - name: Clean install of dependencies
+      run: npm ci
+    - name: Build application
+      run: npm run build --if-present
+    - name: Run test
+      run: npm run test:prod
+    - name: Update version
+      run: |
+          git config user.name "GitHub Actions"
+          git config user.email "<>"
+          npm version prerelease -m "Upgrade to %s"
+          echo "APP_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+          git push --follow-tags
     - run: echo "Updated application to version ${{ env.APP_VERSION }}."
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ env.APP_VERSION }}
+        release_name: Release ${{ env.APP_VERSION }}
+        body: |
+          Release ${{ env.APP_VERSION }}
+        draft: false
+        prerelease: true
     - name: Deploy to DEV
-    - run: echo "Successfully deployed to DEV."
-    
+      run: echo "Successfully deployed to DEV-Environment."
