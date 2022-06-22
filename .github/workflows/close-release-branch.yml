@@ -77,7 +77,7 @@ jobs:
         run: echo "Successfully deployed to PROD-Environment."
 
   delete-release-branch:
-    needs: create_release
+    needs: create-release
     runs-on: ubuntu-latest
     steps:
       - name: Delete release branch
