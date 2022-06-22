@@ -54,10 +54,10 @@ jobs:
         git config user.name "GitHub Actions"
         git config user.email "<>"
     - name: Update major version
-      if: ${{ github.event.version == 'major' }}
+      if: ${{ github.event.version == major }}
       run: npm version premajor --preid="rc" -m "Upgrade to %s"
     - name: Update minor version
-      if: ${{ github.event.version == 'minor' }}
+      if: ${{ github.event.version == minor }}
       run: npm version preminor --preid="rc" -m "Upgrade to %s"
     - name: Parse version
       run: echo "APP_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
