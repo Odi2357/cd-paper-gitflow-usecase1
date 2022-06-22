@@ -36,6 +36,9 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    outputs:
+      version: ${{ env.APP_VERSION }}
+
     steps:
     - uses: actions/checkout@v3
       with:
@@ -73,11 +76,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ env.APP_VERSION }}
-          release_name: Release ${{ env.APP_VERSION }}
+          tag_name: v${{ needs.update-version.outputs.version }}
+          release_name: Release ${{ needs.update-version.outputs.version }}
           body: |
-            Release ${{ env.APP_VERSION }}
+            Release ${{ needs.update-version.outputs.version }}
           draft: false
           prerelease: true
-      - name: Deploy to DEV
-        run: echo "Successfully deployed to DEV-Environment."
+      - name: Deploy to TEST
+        run: echo "Successfully deployed to TEST-Environment."
