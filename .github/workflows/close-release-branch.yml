@@ -1,6 +1,10 @@
 on:
-  push:
-    branches: [ "release/*" ]
+  workflow_dispatch:
+    inputs:
+      release-branch:
+        required: true
+        type: string
+        description: Define release branch
 
 jobs:
   build-test:
@@ -10,7 +14,8 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.PAT }}
+        ref: ${{ github.event.inputs.release-branch }}
     - name: Build & Test
       uses: actions/setup-node@v3
       with:
@@ -35,6 +40,7 @@ jobs:
     - uses: actions/checkout@v3
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
+        ref: ${{ github.event.inputs.release-branch }}
     - name: Build & Test
       uses: actions/setup-node@v3
       with:
@@ -45,12 +51,11 @@ jobs:
         git config user.name "GitHub Actions"
         git config user.email "<>"
     - name: Update version
-      run: |
-        npm version prerelease -m "Upgrade to %s"
-        git push --follow-tags
+      run: npm version $(echo ${{ github.event.inputs.release-branch }} | cud -d/ -f1) -m "Upgrade to %s"
     - name: Parse version
       run: echo "APP_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
-    - run: echo "Updated application to version ${{ env.APP_VERSION }}."
+    - name: Push to master
+      run: git push origin development:release/$(echo ${{ env.APP_VERSION }} | cut -d- -f1) --follow-tags
 
   create-release:
     needs: update-version
@@ -67,6 +72,13 @@ jobs:
           body: |
             Release ${{ needs.update-version.outputs.version }}
           draft: false
-          prerelease: true
-      - name: Deploy to TEST
-        run: echo "Successfully deployed to TEST-Environment."
+          prerelease: false
+      - name: Deploy to PROD
+        run: echo "Successfully deployed to PROD-Environment."
+
+  delete-release-branch:
+    needs: create_release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete release branch
+        run: git push origin --delete ${{ github.event.inputs.release-branch }}

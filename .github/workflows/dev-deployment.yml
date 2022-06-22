@@ -68,5 +68,5 @@ jobs:
             Release ${{ needs.update-version.outputs.version }}
           draft: false
           prerelease: true
-      - name: Deploy to TEST
-        run: echo "Successfully deployed to TEST-Environment."
+      - name: Deploy to DEV
+        run: echo "Successfully deployed to DEV-Environment."

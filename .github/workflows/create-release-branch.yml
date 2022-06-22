@@ -1,6 +1,13 @@
 on:
-  push:
-    branches: [ "release/*" ]
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        type: choice
+        description: Choose version bump
+        options:
+        - major
+        - minor
 
 jobs:
   build-test:
@@ -10,7 +17,8 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.PAT }}
+        ref: development
     - name: Build & Test
       uses: actions/setup-node@v3
       with:
@@ -35,6 +43,7 @@ jobs:
     - uses: actions/checkout@v3
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
+        ref: development
     - name: Build & Test
       uses: actions/setup-node@v3
       with:
@@ -44,13 +53,16 @@ jobs:
       run: |
         git config user.name "GitHub Actions"
         git config user.email "<>"
-    - name: Update version
-      run: |
-        npm version prerelease -m "Upgrade to %s"
-        git push --follow-tags
+    - name: Update major version
+      if: (github.event.inputs.version == 'major')
+      run: npm version premajor --preid="rc" -m "Upgrade to %s"
+    - name: Update minor version
+      if: (github.event.inputs.version == 'minor')
+      run: npm version preminor --preid="rc" -m "Upgrade to %s"
     - name: Parse version
       run: echo "APP_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
-    - run: echo "Updated application to version ${{ env.APP_VERSION }}."
+    - name: Create release branch
+      run: git push origin development:release/$(echo ${{ env.APP_VERSION }} | cut -d- -f1) --follow-tags
 
   create-release:
     needs: update-version
