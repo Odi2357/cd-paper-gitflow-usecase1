@@ -8,7 +8,7 @@ on:
     branches: [ "development" ]
 
 jobs:
-  build:
+  build-deploy:
 
     runs-on: ubuntu-latest
 
@@ -19,31 +19,21 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.PAT }}
     - name: Build & Test
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
-
-  deploy:
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [16.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-
-    steps:
-    - uses: actions/checkout@v3
-    - name: Create new version
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm version prerelease -m "Upgrade to %s"
+    - name: Clean install of dependencies
+      run: npm ci
+    - name: Build application
+      run: npm run build --if-present
+    - name: Run test
+      run: npm test -- --watch=false
+    - name: Update version
+      run: npm version prerelease -m "Upgrade to %s"
     - run: |
         echo "APP_VERSION=$(npm pkg get version)" >> $GITHUB_ENV
     - run: echo "Updated application to version ${{ env.APP_VERSION }}."
