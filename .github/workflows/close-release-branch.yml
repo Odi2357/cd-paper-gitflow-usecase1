@@ -54,8 +54,8 @@ jobs:
       run: npm version $(echo ${{ github.event.inputs.release-branch }} | cut -d/ -f2) -m "Upgrade to %s"
     - name: Parse version
       run: echo "APP_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
-    - name: Push to master
-      run: git push origin ${{ github.event.inputs.release-branch }}:master --follow-tags
+    - name: Push to main
+      run: git push origin ${{ github.event.inputs.release-branch }}:main --follow-tags
 
   create-release:
     needs: update-version
