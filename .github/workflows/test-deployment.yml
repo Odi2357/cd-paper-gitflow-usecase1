@@ -49,22 +49,20 @@ jobs:
       with:
         node-version: 16.x
         cache: 'npm'
+    - name: Set up config
+      run: |
+        git config user.name "GitHub Actions"
+        git config user.email "<>"
     - name: Update major version
       if: github.event.version == github.event.version.major
-      run: |
-          git config user.name "GitHub Actions"
-          git config user.email "<>"
-          npm version premajor --preid="rc" -m "Upgrade to %s [no ci]"
-          echo "APP_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
-          git push origin development:release/${{ env.APP_VERSION }} --follow-tags
+      run: npm version premajor --preid="rc" -m "Upgrade to %s [no ci]"
     - name: Update minor version
       if: github.event.version == github.event.version.minor
-      run: |
-          git config user.name "GitHub Actions"
-          git config user.email "<>"
-          npm version preminor --preid="rc" -m "Upgrade to %s [no ci]"
-          echo "APP_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
-          git push origin development:release/${{ env.APP_VERSION }} --follow-tags
+      run: npm version preminor --preid="rc" -m "Upgrade to %s [no ci]"
+    - name: Parse version
+      run: echo "APP_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+    - name: Create release branch
+      run: git push origin development:release/${{ env.APP_VERSION }} --follow-tags
 
   create-release:
     needs: update-version
