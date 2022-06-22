@@ -4,7 +4,7 @@
 name: Node.js CI
 
 on:
-  pull_request:
+  push:
     branches: [ "development" ]
 
 jobs:
@@ -27,7 +27,7 @@ jobs:
     - run: npm ci
     - run: npm run build --if-present
     - run: npm test
-    
+
   deploy:
     runs-on: ubuntu-latest
 
@@ -44,9 +44,8 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
     - run: npm version prerelease -m "Upgrade to %s"
-    - run: | 
+    - run: |
         echo "APP_VERSION=$(npm pkg get version)" >> $GITHUB_ENV
     - run: echo "Updated application to version ${{ env.APP_VERSION }}."
     - name: Deploy to DEV
-    - run: echo "Successfully deployed to DEV."
-    
+      run: echo "Successfully deployed to DEV-Environment."
