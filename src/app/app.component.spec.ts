@@ -25,7 +25,8 @@ describe('AppComponent', () => {
   it('should render title', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
+    const app = fixture.componentInstance;
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.content span')?.textContent).toContain('cd-paper-gitflow-usecase1 app is running!');
+    expect(compiled.getElementsByTagName("h1")[0]?.textContent).toContain(app.title);
   });
 });
