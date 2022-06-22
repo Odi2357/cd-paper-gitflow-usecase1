@@ -33,10 +33,22 @@ jobs:
           git config user.name "GitHub Actions"
           git config user.email "<>"
           npm version prerelease -m "Upgrade to %s [no ci]"
-          git tag $(npm pkg get version)
+          git tag $(node -p "require('./package.json').version")
           git push --tags
     - run: |
-        echo "APP_VERSION=$(npm pkg get version)" >> $GITHUB_ENV
+        echo "APP_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
     - run: echo "Updated application to version ${{ env.APP_VERSION }}."
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ env.APP_VERSION }}
+        release_name: Release ${{ env.APP_VERSION }}
+        body: |
+          Release ${{ env.APP_VERSION }}
+        draft: false
+        prerelease: true
     - name: Deploy to DEV
       run: echo "Successfully deployed to DEV-Environment."
