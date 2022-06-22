@@ -34,7 +34,7 @@ jobs:
           git config user.email "<>"
           npm version prerelease -m "Upgrade to %s [no ci]"
           git tag $(npm pkg get version)
-          git push
+          git push --tags
     - run: |
         echo "APP_VERSION=$(npm pkg get version)" >> $GITHUB_ENV
     - run: echo "Updated application to version ${{ env.APP_VERSION }}."
