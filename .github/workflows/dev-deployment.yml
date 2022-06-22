@@ -37,7 +37,11 @@ jobs:
           git config user.name "GitHub Actions"
           git config user.email "<>"
     - name: Update version
-      run: npm version prerelease -m "Upgrade to %s [no ci]"
+      run: |
+          git config user.name "GitHub Actions"
+          git config user.email "<>"
+          npm version prerelease -m "Upgrade to %s [no ci]"
+          git push
     - run: |
         echo "APP_VERSION=$(npm pkg get version)" >> $GITHUB_ENV
     - run: echo "Updated application to version ${{ env.APP_VERSION }}."
